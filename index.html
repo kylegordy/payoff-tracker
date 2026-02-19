@@ -68,7 +68,7 @@
       color: #1d1d1f;
     }
 
-    input {
+    input, select {
       width: 100%;
       padding: 10px 12px;
       border: 1.5px solid #d2d2d7;
@@ -77,9 +77,17 @@
       font-family: inherit;
       transition: border-color 0.2s;
       -webkit-appearance: none;
+      background: #fff;
     }
 
-    input:focus {
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%2386868b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 32px;
+    }
+
+    input:focus, select:focus {
       outline: none;
       border-color: #0071e3;
     }
@@ -89,6 +97,36 @@
       font-size: 12px;
       color: #86868b;
       margin-top: 4px;
+    }
+
+    .derived-info {
+      background: #f5f5f7;
+      border-radius: 12px;
+      padding: 14px;
+      margin-top: 14px;
+    }
+
+    .derived-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+    }
+
+    .derived-row + .derived-row {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #e5e5ea;
+    }
+
+    .derived-row .label {
+      color: #86868b;
+      font-weight: 500;
+    }
+
+    .derived-row .value {
+      font-weight: 600;
+      color: #1d1d1f;
     }
 
     .total-payment {
@@ -111,6 +149,46 @@
       font-size: 22px;
       font-weight: 700;
       color: #2e7d32;
+    }
+
+    .progress-container {
+      margin-top: 14px;
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 6px;
+    }
+
+    .progress-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      color: #86868b;
+    }
+
+    .progress-pct {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0071e3;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #e5e5ea;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: #0071e3;
+      border-radius: 4px;
+      transition: width 0.3s ease;
     }
 
     .results-grid {
@@ -231,11 +309,6 @@
       border-bottom: 1px solid #f0f0f5;
     }
 
-    .schedule-table tr.extra-row td {
-      color: #2e7d32;
-      font-weight: 500;
-    }
-
     #no-results {
       text-align: center;
       padding: 40px 20px;
@@ -248,23 +321,71 @@
   <p class="subtitle">See how extra payments accelerate your payoff</p>
 
   <div class="card">
-    <h2>Loan Details</h2>
+    <h2>Original Loan</h2>
     <div class="field">
-      <label for="balance">Current Balance</label>
-      <input type="text" id="balance" inputmode="decimal" placeholder="$300,000">
+      <label for="original">Original Loan Amount</label>
+      <input type="text" id="original" inputmode="decimal" placeholder="$400,000">
+    </div>
+    <div class="field">
+      <label for="term">Loan Term</label>
+      <select id="term">
+        <option value="360">30 years</option>
+        <option value="240">20 years</option>
+        <option value="180">15 years</option>
+        <option value="120">10 years</option>
+      </select>
     </div>
     <div class="field">
       <label for="rate">Interest Rate (%)</label>
       <input type="text" id="rate" inputmode="decimal" placeholder="6.5">
     </div>
     <div class="field">
-      <label for="payment">Monthly P&I Payment</label>
-      <input type="text" id="payment" inputmode="decimal" placeholder="$1,896">
+      <label for="startdate">Loan Start Date</label>
+      <input type="month" id="startdate" placeholder="2020-03">
     </div>
+    <div class="derived-info" id="derived-info" style="display: none;">
+      <div class="derived-row">
+        <span class="label">P&I Payment</span>
+        <span class="value" id="derived-pi">—</span>
+      </div>
+      <div class="derived-row">
+        <span class="label">Total Interest (life of loan)</span>
+        <span class="value" id="derived-total-interest">—</span>
+      </div>
+      <div class="derived-row" id="derived-payoff-row" style="display: none;">
+        <span class="label">Original Payoff Date</span>
+        <span class="value" id="derived-payoff-date">—</span>
+      </div>
+      <div class="derived-row" id="derived-elapsed-row" style="display: none;">
+        <span class="label">Time into Loan</span>
+        <span class="value" id="derived-elapsed">—</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Where You Are Now</h2>
+    <div class="field">
+      <label for="balance">Current Balance</label>
+      <input type="text" id="balance" inputmode="decimal" placeholder="$350,000">
+    </div>
+    <div class="progress-container" id="progress-container" style="display: none;">
+      <div class="progress-header">
+        <span class="progress-label">Principal Paid Off</span>
+        <span class="progress-pct" id="progress-pct">0%</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Extra Payments</h2>
     <div class="field">
       <label for="escrow">Escrow (taxes & insurance)</label>
       <input type="text" id="escrow" inputmode="decimal" placeholder="$450">
-      <span class="field-hint">Optional — helps separate what actually pays down principal</span>
+      <span class="field-hint">Optional — not used in payoff math, just for your total payment reference</span>
     </div>
     <div class="field">
       <label for="extra">Extra Monthly Payment</label>
@@ -297,7 +418,7 @@
           <div class="stat-detail" id="new-months">—</div>
         </div>
         <div class="stat">
-          <div class="stat-label">Total Interest</div>
+          <div class="stat-label">Remaining Interest</div>
           <div class="stat-value" id="orig-interest">—</div>
           <div class="stat-detail">without extra</div>
         </div>
@@ -336,13 +457,13 @@
 
   <script>
     const $ = (id) => document.getElementById(id);
-    const STORAGE_KEY = 'payoff-tracker';
-    const FIELDS = ['balance', 'rate', 'payment', 'escrow', 'extra'];
+    const STORAGE_KEY = 'payoff-tracker-v2';
+    const FIELDS = ['original', 'term', 'rate', 'startdate', 'balance', 'escrow', 'extra'];
     // Short param names for compact URLs
-    const PARAM_MAP = { balance: 'b', rate: 'r', payment: 'p', escrow: 's', extra: 'e' };
-    const PARAM_MAP_REV = { b: 'balance', r: 'rate', p: 'payment', s: 'escrow', e: 'extra' };
+    const PARAM_MAP = { original: 'o', term: 't', rate: 'r', startdate: 'd', balance: 'b', escrow: 's', extra: 'e' };
+    const PARAM_MAP_REV = { o: 'original', t: 'term', r: 'rate', d: 'startdate', b: 'balance', s: 'escrow', e: 'extra' };
     // Currency fields get formatted with $
-    const CURRENCY_FIELDS = ['balance', 'payment', 'escrow', 'extra'];
+    const CURRENCY_FIELDS = ['original', 'balance', 'escrow', 'extra'];
 
     // Save current inputs to localStorage
     function saveInputs() {
@@ -376,16 +497,21 @@
       for (const [short, field] of Object.entries(PARAM_MAP_REV)) {
         const val = params.get(short);
         if (val) {
-          const num = parseFloat(val);
-          if (!isNaN(num) && num > 0) {
-            $(field).value = CURRENCY_FIELDS.includes(field)
-              ? '$' + num.toLocaleString('en-US', { maximumFractionDigits: 0 })
-              : val;
+          if (field === 'term' || field === 'startdate') {
+            $(field).value = val;
             loaded = true;
+          } else {
+            const num = parseFloat(val);
+            if (!isNaN(num) && num > 0) {
+              $(field).value = CURRENCY_FIELDS.includes(field)
+                ? '$' + num.toLocaleString('en-US', { maximumFractionDigits: 0 })
+                : val;
+              loaded = true;
+            }
           }
         }
       }
-      if (loaded) saveInputs(); // persist URL values to localStorage
+      if (loaded) saveInputs();
       return loaded;
     }
 
@@ -393,9 +519,13 @@
     function buildShareURL() {
       const url = new URL(window.location.pathname, window.location.origin);
       FIELDS.forEach((id) => {
-        const val = parseNum(id);
-        if (val > 0) {
-          url.searchParams.set(PARAM_MAP[id], val);
+        if (id === 'term' || id === 'startdate') {
+          if ($(id).value) url.searchParams.set(PARAM_MAP[id], $(id).value);
+        } else {
+          const val = parseNum(id);
+          if (val > 0) {
+            url.searchParams.set(PARAM_MAP[id], val);
+          }
         }
       });
       return url.toString();
@@ -428,7 +558,14 @@
       return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
     }
 
-    // Calculate amortization schedule
+    // Calculate standard monthly P&I payment
+    function calcMonthlyPI(principal, annualRate, termMonths) {
+      const r = annualRate / 100 / 12;
+      if (r === 0) return principal / termMonths;
+      return principal * (r * Math.pow(1 + r, termMonths)) / (Math.pow(1 + r, termMonths) - 1);
+    }
+
+    // Calculate amortization schedule from a starting balance
     function amortize(balance, annualRate, monthlyPayment) {
       const monthlyRate = annualRate / 100 / 12;
       const schedule = [];
@@ -437,7 +574,7 @@
       for (let i = 1; remaining > 0.01 && i <= 600; i++) {
         const interest = remaining * monthlyRate;
         const principal = Math.min(remaining, monthlyPayment - interest);
-        if (principal <= 0) break; // payment doesn't cover interest
+        if (principal <= 0) break;
         remaining = Math.max(0, remaining - principal);
         schedule.push({
           month: i,
@@ -538,39 +675,96 @@
     }
 
     function calculate() {
-      const balance = parseNum('balance');
+      const originalLoan = parseNum('original');
+      const termMonths = parseInt($('term').value) || 360;
       const rate = parseNum('rate');
-      const totalPIInput = parseNum('payment');
+      const startDateVal = $('startdate').value; // "YYYY-MM" or ""
+      const balance = parseNum('balance');
       const escrow = parseNum('escrow');
       const extra = parseNum('extra');
 
-      // P&I is what the user enters — escrow doesn't affect amortization
-      const payment = totalPIInput;
+      // Parse start date
+      let startDate = null;
+      let elapsedMonths = 0;
+      if (startDateVal) {
+        const [year, month] = startDateVal.split('-').map(Number);
+        startDate = new Date(year, month - 1); // first of that month
+        const now = new Date();
+        elapsedMonths = (now.getFullYear() - startDate.getFullYear()) * 12
+          + (now.getMonth() - startDate.getMonth());
+      }
+
+      // Calculate the true P&I payment from original loan terms
+      let piPayment = 0;
+      let fullScheduleInterest = 0;
+
+      if (originalLoan > 0 && rate > 0) {
+        piPayment = calcMonthlyPI(originalLoan, rate, termMonths);
+        // Total interest over full life of original loan
+        const fullSchedule = amortize(originalLoan, rate, piPayment);
+        fullScheduleInterest = fullSchedule.reduce((s, d) => s + d.interest, 0);
+
+        // Show derived info
+        $('derived-info').style.display = 'block';
+        $('derived-pi').textContent = fmt(piPayment);
+        $('derived-total-interest').textContent = fmt(fullScheduleInterest);
+
+        // Show original payoff date and elapsed time if start date provided
+        if (startDate) {
+          const origPayoff = new Date(startDate);
+          origPayoff.setMonth(origPayoff.getMonth() + termMonths);
+          $('derived-payoff-row').style.display = 'flex';
+          $('derived-payoff-date').textContent = origPayoff.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+
+          $('derived-elapsed-row').style.display = 'flex';
+          $('derived-elapsed').textContent = fmtMonths(elapsedMonths);
+        } else {
+          $('derived-payoff-row').style.display = 'none';
+          $('derived-elapsed-row').style.display = 'none';
+        }
+      } else {
+        $('derived-info').style.display = 'none';
+        $('derived-payoff-row').style.display = 'none';
+        $('derived-elapsed-row').style.display = 'none';
+      }
+
+      // Show progress bar
+      if (originalLoan > 0 && balance > 0 && balance <= originalLoan) {
+        const paidOff = ((originalLoan - balance) / originalLoan) * 100;
+        $('progress-container').style.display = 'block';
+        $('progress-pct').textContent = `${Math.round(paidOff)}%`;
+        $('progress-fill').style.width = `${paidOff}%`;
+      } else {
+        $('progress-container').style.display = 'none';
+      }
 
       // Show new monthly payment total
-      const totalMonthly = payment + escrow + extra;
-      if (totalMonthly > 0) {
+      const totalMonthly = piPayment + escrow + extra;
+      if (totalMonthly > 0 && extra > 0) {
         $('total-payment').style.display = 'block';
         $('total-payment-value').textContent = `${fmt(totalMonthly)}/mo`;
       } else {
         $('total-payment').style.display = 'none';
       }
 
-      if (balance <= 0 || rate <= 0 || payment <= 0) {
-        $('results').style.display = 'none';
-        $('share-btn').style.display = 'none';
-        $('no-results').style.display = 'block';
-        return;
-      }
-
-      // Check payment covers interest
-      const minPayment = balance * (rate / 100 / 12);
-      if (payment <= minPayment) {
+      // Need all core inputs to show results
+      if (originalLoan <= 0 || rate <= 0 || balance <= 0 || piPayment <= 0) {
         $('results').style.display = 'none';
         $('share-btn').style.display = 'none';
         $('no-results').style.display = 'block';
         $('no-results').querySelector('p').textContent =
-          `P&I payment must exceed ${fmt(Math.ceil(minPayment))} to cover interest`;
+          'Enter your loan details above to see your payoff timeline';
+        return;
+      }
+
+      // Check P&I covers interest on current balance
+      const minPayment = balance * (rate / 100 / 12);
+      if (piPayment <= minPayment) {
+        $('results').style.display = 'none';
+        $('share-btn').style.display = 'none';
+        $('no-results').style.display = 'block';
+        $('no-results').querySelector('p').textContent =
+          `P&I payment (${fmt(piPayment)}) doesn't cover monthly interest (${fmt(Math.ceil(minPayment))}). Check your inputs.`;
         return;
       }
 
@@ -578,20 +772,31 @@
       $('results').style.display = 'block';
       $('share-btn').style.display = 'block';
 
-      const original = amortize(balance, rate, payment);
-      const withExtra = amortize(balance, rate, payment + extra);
+      // Original: current balance at P&I payment (no extra)
+      const original = amortize(balance, rate, piPayment);
+      // With extra: current balance at P&I + extra
+      const withExtra = amortize(balance, rate, piPayment + extra);
 
-      const origTotal = original.reduce((s, d) => s + d.interest, 0);
-      const extraTotal = withExtra.reduce((s, d) => s + d.interest, 0);
+      const origRemaining = original.reduce((s, d) => s + d.interest, 0);
+      const extraRemaining = withExtra.reduce((s, d) => s + d.interest, 0);
 
-      $('orig-date').textContent = payoffDate(original.length);
-      $('orig-months').textContent = fmtMonths(original.length);
-      $('orig-interest').textContent = fmt(origTotal);
+      // Original payoff: use true date from start + term if available
+      if (startDate) {
+        const origPayoff = new Date(startDate);
+        origPayoff.setMonth(origPayoff.getMonth() + termMonths);
+        $('orig-date').textContent = origPayoff.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        const remainingOrigMonths = termMonths - elapsedMonths;
+        $('orig-months').textContent = `${fmtMonths(Math.max(0, remainingOrigMonths))} left`;
+      } else {
+        $('orig-date').textContent = payoffDate(original.length);
+        $('orig-months').textContent = fmtMonths(original.length);
+      }
+      $('orig-interest').textContent = fmt(origRemaining);
 
       if (extra > 0) {
         $('new-date').textContent = payoffDate(withExtra.length);
         $('new-months').textContent = fmtMonths(withExtra.length);
-        $('interest-saved').textContent = fmt(origTotal - extraTotal);
+        $('interest-saved').textContent = fmt(origRemaining - extraRemaining);
         $('time-saved').textContent = `${fmtMonths(original.length - withExtra.length)} sooner`;
       } else {
         $('new-date').textContent = '—';
@@ -602,10 +807,11 @@
 
       drawChart(original, withExtra);
 
-      // Amortization table (with extra payments)
+      // Amortization table (with extra payments, or original if no extra)
+      const displaySchedule = extra > 0 ? withExtra : original;
       const tbody = $('schedule-body');
       tbody.innerHTML = '';
-      withExtra.forEach((row) => {
+      displaySchedule.forEach((row) => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${row.month}</td>
@@ -619,7 +825,7 @@
     }
 
     // Auto-format currency inputs
-    ['balance', 'payment', 'escrow', 'extra'].forEach((id) => {
+    ['original', 'balance', 'escrow', 'extra'].forEach((id) => {
       $(id).addEventListener('blur', function () {
         const val = parseFloat(this.value.replace(/[^0-9.]/g, ''));
         if (!isNaN(val) && val > 0) {
@@ -629,15 +835,19 @@
     });
 
     // Recalculate on any input change, and save to localStorage
-    document.querySelectorAll('input').forEach((input) => {
+    document.querySelectorAll('input, select').forEach((input) => {
       input.addEventListener('input', () => {
+        saveInputs();
+        calculate();
+      });
+      input.addEventListener('change', () => {
         saveInputs();
         calculate();
       });
     });
 
     // Also save formatted values on blur
-    ['balance', 'payment', 'escrow', 'extra'].forEach((id) => {
+    ['original', 'balance', 'escrow', 'extra'].forEach((id) => {
       $(id).addEventListener('blur', () => saveInputs());
     });
 
@@ -659,7 +869,6 @@
           this.classList.remove('copied');
         }, 2000);
       }).catch(() => {
-        // Fallback: select a prompt with the URL
         prompt('Copy this link:', url);
       });
     });
