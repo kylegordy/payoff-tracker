@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home Payoff Tracker</title>
+  <meta name="description" content="See how extra payments can save you thousands in interest and years off your mortgage. Enter your loan details and share the results.">
+  <meta property="og:title" content="Home Payoff Tracker">
+  <meta property="og:description" content="See how extra payments can save you thousands in interest and years off your mortgage.">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Home Payoff Tracker">
+  <meta name="twitter:description" content="See how extra payments can save you thousands in interest and years off your mortgage.">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f7;
+      color: #1d1d1f;
+      padding: 20px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      color: #86868b;
+      font-size: 15px;
+      margin-bottom: 24px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    .card h2 {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #86868b;
+      margin-bottom: 16px;
+    }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    .field:last-child {
+      margin-bottom: 0;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 6px;
+      color: #1d1d1f;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid #d2d2d7;
+      border-radius: 10px;
+      font-size: 16px;
+      font-family: inherit;
+      transition: border-color 0.2s;
+      -webkit-appearance: none;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #0071e3;
+    }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .stat {
+      background: #f5f5f7;
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .stat.highlight {
+      background: #e8f5e9;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      color: #86868b;
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .stat.highlight .stat-value {
+      color: #2e7d32;
+    }
+
+    .stat-detail {
+      font-size: 12px;
+      color: #86868b;
+      margin-top: 2px;
+    }
+
+    .chart-container {
+      margin-top: 8px;
+      position: relative;
+      height: 200px;
+    }
+
+    canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .share-btn {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      background: #0071e3;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      font-family: inherit;
+      color: #fff;
+      cursor: pointer;
+      margin-bottom: 16px;
+      transition: background 0.2s;
+    }
+
+    .share-btn:active {
+      background: #005bb5;
+    }
+
+    .share-btn.copied {
+      background: #34c759;
+    }
+
+    .schedule-toggle {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      background: none;
+      border: 1.5px solid #d2d2d7;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      font-family: inherit;
+      color: #0071e3;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+
+    .schedule-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-top: 12px;
+      display: none;
+    }
+
+    .schedule-table.visible {
+      display: table;
+    }
+
+    .schedule-table th {
+      text-align: left;
+      font-weight: 600;
+      color: #86868b;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      padding: 8px 6px;
+      border-bottom: 1px solid #e5e5ea;
+    }
+
+    .schedule-table td {
+      padding: 8px 6px;
+      border-bottom: 1px solid #f0f0f5;
+    }
+
+    .schedule-table tr.extra-row td {
+      color: #2e7d32;
+      font-weight: 500;
+    }
+
+    #no-results {
+      text-align: center;
+      padding: 40px 20px;
+      color: #86868b;
+    }
+  </style>
+</head>
+<body>
+  <h1>Home Payoff Tracker</h1>
+  <p class="subtitle">See how extra payments accelerate your payoff</p>
+
+  <div class="card">
+    <h2>Loan Details</h2>
+    <div class="field">
+      <label for="balance">Current Balance</label>
+      <input type="text" id="balance" inputmode="decimal" placeholder="$300,000">
+    </div>
+    <div class="field">
+      <label for="rate">Interest Rate (%)</label>
+      <input type="text" id="rate" inputmode="decimal" placeholder="6.5">
+    </div>
+    <div class="field">
+      <label for="payment">Monthly Payment</label>
+      <input type="text" id="payment" inputmode="decimal" placeholder="$1,896">
+    </div>
+    <div class="field">
+      <label for="extra">Extra Monthly Payment</label>
+      <input type="text" id="extra" inputmode="decimal" placeholder="$200">
+    </div>
+  </div>
+
+  <button class="share-btn" id="share-btn" style="display: none;">Copy Share Link</button>
+
+  <div id="no-results" class="card">
+    <p>Enter your loan details above to see your payoff timeline</p>
+  </div>
+
+  <div id="results" style="display: none;">
+    <div class="card">
+      <h2>Payoff Summary</h2>
+      <div class="results-grid">
+        <div class="stat">
+          <div class="stat-label">Original Payoff</div>
+          <div class="stat-value" id="orig-date">—</div>
+          <div class="stat-detail" id="orig-months">—</div>
+        </div>
+        <div class="stat highlight">
+          <div class="stat-label">With Extra Payments</div>
+          <div class="stat-value" id="new-date">—</div>
+          <div class="stat-detail" id="new-months">—</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Total Interest</div>
+          <div class="stat-value" id="orig-interest">—</div>
+          <div class="stat-detail">without extra</div>
+        </div>
+        <div class="stat highlight">
+          <div class="stat-label">Interest Saved</div>
+          <div class="stat-value" id="interest-saved">—</div>
+          <div class="stat-detail" id="time-saved">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Balance Over Time</h2>
+      <div class="chart-container">
+        <canvas id="chart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Amortization Schedule</h2>
+      <button class="schedule-toggle" id="schedule-toggle">Show Monthly Breakdown</button>
+      <table class="schedule-table" id="schedule-table">
+        <thead>
+          <tr>
+            <th>Month</th>
+            <th>Payment</th>
+            <th>Principal</th>
+            <th>Interest</th>
+            <th>Balance</th>
+          </tr>
+        </thead>
+        <tbody id="schedule-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const STORAGE_KEY = 'payoff-tracker';
+    const FIELDS = ['balance', 'rate', 'payment', 'extra'];
+    // Short param names for compact URLs
+    const PARAM_MAP = { balance: 'b', rate: 'r', payment: 'p', extra: 'e' };
+    const PARAM_MAP_REV = { b: 'balance', r: 'rate', p: 'payment', e: 'extra' };
+    // Currency fields get formatted with $
+    const CURRENCY_FIELDS = ['balance', 'payment', 'extra'];
+
+    // Save current inputs to localStorage
+    function saveInputs() {
+      const data = {};
+      FIELDS.forEach((id) => data[id] = $(id).value);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    // Load saved inputs from localStorage
+    function loadInputs() {
+      try {
+        const data = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if (!data) return false;
+        let loaded = false;
+        FIELDS.forEach((id) => {
+          if (data[id]) {
+            $(id).value = data[id];
+            loaded = true;
+          }
+        });
+        return loaded;
+      } catch {
+        return false;
+      }
+    }
+
+    // Load inputs from URL query params (takes priority over localStorage)
+    function loadFromURL() {
+      const params = new URLSearchParams(window.location.search);
+      let loaded = false;
+      for (const [short, field] of Object.entries(PARAM_MAP_REV)) {
+        const val = params.get(short);
+        if (val) {
+          const num = parseFloat(val);
+          if (!isNaN(num) && num > 0) {
+            $(field).value = CURRENCY_FIELDS.includes(field)
+              ? '$' + num.toLocaleString('en-US', { maximumFractionDigits: 0 })
+              : val;
+            loaded = true;
+          }
+        }
+      }
+      if (loaded) saveInputs(); // persist URL values to localStorage
+      return loaded;
+    }
+
+    // Build a share URL from current raw values
+    function buildShareURL() {
+      const url = new URL(window.location.pathname, window.location.origin);
+      FIELDS.forEach((id) => {
+        const val = parseNum(id);
+        if (val > 0) {
+          url.searchParams.set(PARAM_MAP[id], val);
+        }
+      });
+      return url.toString();
+    }
+
+    // Parse currency/number input
+    function parseNum(id) {
+      const val = $(id).value.replace(/[^0-9.]/g, '');
+      return parseFloat(val) || 0;
+    }
+
+    // Format as currency
+    function fmt(n) {
+      return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 });
+    }
+
+    // Format months as readable duration
+    function fmtMonths(m) {
+      const years = Math.floor(m / 12);
+      const months = m % 12;
+      if (years === 0) return `${months} mo`;
+      if (months === 0) return `${years} yr`;
+      return `${years} yr ${months} mo`;
+    }
+
+    // Get payoff date from now
+    function payoffDate(months) {
+      const d = new Date();
+      d.setMonth(d.getMonth() + months);
+      return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    }
+
+    // Calculate amortization schedule
+    function amortize(balance, annualRate, monthlyPayment) {
+      const monthlyRate = annualRate / 100 / 12;
+      const schedule = [];
+      let remaining = balance;
+
+      for (let i = 1; remaining > 0.01 && i <= 600; i++) {
+        const interest = remaining * monthlyRate;
+        const principal = Math.min(remaining, monthlyPayment - interest);
+        if (principal <= 0) break; // payment doesn't cover interest
+        remaining = Math.max(0, remaining - principal);
+        schedule.push({
+          month: i,
+          payment: principal + interest,
+          principal,
+          interest,
+          balance: remaining,
+        });
+      }
+      return schedule;
+    }
+
+    // Draw the chart on canvas
+    function drawChart(original, withExtra) {
+      const canvas = $('chart');
+      const ctx = canvas.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.parentElement.getBoundingClientRect();
+
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.scale(dpr, dpr);
+
+      const w = rect.width;
+      const h = rect.height;
+      const pad = { top: 10, right: 10, bottom: 30, left: 55 };
+      const plotW = w - pad.left - pad.right;
+      const plotH = h - pad.top - pad.bottom;
+
+      ctx.clearRect(0, 0, w, h);
+
+      const maxMonths = Math.max(original.length, withExtra.length);
+      const maxBalance = original.length > 0 ? original[0].balance + original[0].principal : 0;
+      if (maxMonths === 0 || maxBalance === 0) return;
+
+      const xScale = plotW / maxMonths;
+      const yScale = plotH / maxBalance;
+
+      // Grid lines
+      ctx.strokeStyle = '#e5e5ea';
+      ctx.lineWidth = 1;
+      const gridSteps = 4;
+      for (let i = 0; i <= gridSteps; i++) {
+        const y = pad.top + (plotH / gridSteps) * i;
+        ctx.beginPath();
+        ctx.moveTo(pad.left, y);
+        ctx.lineTo(w - pad.right, y);
+        ctx.stroke();
+
+        const val = maxBalance - (maxBalance / gridSteps) * i;
+        ctx.fillStyle = '#86868b';
+        ctx.font = '11px -apple-system, sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText(fmt(val), pad.left - 8, y + 4);
+      }
+
+      // X-axis labels
+      ctx.textAlign = 'center';
+      const yearInterval = Math.max(1, Math.ceil(maxMonths / 12 / 5));
+      for (let yr = 0; yr <= Math.ceil(maxMonths / 12); yr += yearInterval) {
+        const x = pad.left + yr * 12 * xScale;
+        if (x <= w - pad.right) {
+          ctx.fillText(`Yr ${yr}`, x, h - 8);
+        }
+      }
+
+      // Draw line helper
+      function drawLine(data, color, startBalance) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(pad.left, pad.top + plotH - startBalance * yScale);
+        data.forEach((d) => {
+          const x = pad.left + d.month * xScale;
+          const y = pad.top + plotH - d.balance * yScale;
+          ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+      }
+
+      const startBal = maxBalance;
+      drawLine(original, '#d2d2d7', startBal);
+      drawLine(withExtra, '#34c759', startBal);
+
+      // Legend
+      ctx.font = '12px -apple-system, sans-serif';
+      const legendY = pad.top + 8;
+      ctx.fillStyle = '#d2d2d7';
+      ctx.fillRect(w - pad.right - 140, legendY - 4, 10, 10);
+      ctx.fillStyle = '#86868b';
+      ctx.textAlign = 'left';
+      ctx.fillText('Original', w - pad.right - 126, legendY + 5);
+
+      ctx.fillStyle = '#34c759';
+      ctx.fillRect(w - pad.right - 68, legendY - 4, 10, 10);
+      ctx.fillStyle = '#2e7d32';
+      ctx.fillText('Extra', w - pad.right - 54, legendY + 5);
+    }
+
+    function calculate() {
+      const balance = parseNum('balance');
+      const rate = parseNum('rate');
+      const payment = parseNum('payment');
+      const extra = parseNum('extra');
+
+      if (balance <= 0 || rate <= 0 || payment <= 0) {
+        $('results').style.display = 'none';
+        $('share-btn').style.display = 'none';
+        $('no-results').style.display = 'block';
+        return;
+      }
+
+      // Check payment covers interest
+      const minPayment = balance * (rate / 100 / 12);
+      if (payment <= minPayment) {
+        $('results').style.display = 'none';
+        $('share-btn').style.display = 'none';
+        $('no-results').style.display = 'block';
+        $('no-results').querySelector('p').textContent =
+          `Monthly payment must exceed ${fmt(Math.ceil(minPayment))} to cover interest`;
+        return;
+      }
+
+      $('no-results').style.display = 'none';
+      $('results').style.display = 'block';
+      $('share-btn').style.display = 'block';
+
+      const original = amortize(balance, rate, payment);
+      const withExtra = amortize(balance, rate, payment + extra);
+
+      const origTotal = original.reduce((s, d) => s + d.interest, 0);
+      const extraTotal = withExtra.reduce((s, d) => s + d.interest, 0);
+
+      $('orig-date').textContent = payoffDate(original.length);
+      $('orig-months').textContent = fmtMonths(original.length);
+      $('orig-interest').textContent = fmt(origTotal);
+
+      if (extra > 0) {
+        $('new-date').textContent = payoffDate(withExtra.length);
+        $('new-months').textContent = fmtMonths(withExtra.length);
+        $('interest-saved').textContent = fmt(origTotal - extraTotal);
+        $('time-saved').textContent = `${fmtMonths(original.length - withExtra.length)} sooner`;
+      } else {
+        $('new-date').textContent = '—';
+        $('new-months').textContent = 'Add extra to compare';
+        $('interest-saved').textContent = '—';
+        $('time-saved').textContent = 'Add extra to see savings';
+      }
+
+      drawChart(original, withExtra);
+
+      // Amortization table (with extra payments)
+      const tbody = $('schedule-body');
+      tbody.innerHTML = '';
+      withExtra.forEach((row) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row.month}</td>
+          <td>${fmt(row.payment)}</td>
+          <td>${fmt(row.principal)}</td>
+          <td>${fmt(row.interest)}</td>
+          <td>${fmt(row.balance)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Auto-format currency inputs
+    ['balance', 'payment', 'extra'].forEach((id) => {
+      $(id).addEventListener('blur', function () {
+        const val = parseFloat(this.value.replace(/[^0-9.]/g, ''));
+        if (!isNaN(val) && val > 0) {
+          this.value = '$' + val.toLocaleString('en-US', { maximumFractionDigits: 0 });
+        }
+      });
+    });
+
+    // Recalculate on any input change, and save to localStorage
+    document.querySelectorAll('input').forEach((input) => {
+      input.addEventListener('input', () => {
+        saveInputs();
+        calculate();
+      });
+    });
+
+    // Also save formatted values on blur
+    ['balance', 'payment', 'extra'].forEach((id) => {
+      $(id).addEventListener('blur', () => saveInputs());
+    });
+
+    // Toggle schedule
+    $('schedule-toggle').addEventListener('click', function () {
+      const table = $('schedule-table');
+      const visible = table.classList.toggle('visible');
+      this.textContent = visible ? 'Hide Monthly Breakdown' : 'Show Monthly Breakdown';
+    });
+
+    // Share button — build URL and copy to clipboard
+    $('share-btn').addEventListener('click', function () {
+      const url = buildShareURL();
+      navigator.clipboard.writeText(url).then(() => {
+        this.textContent = 'Copied!';
+        this.classList.add('copied');
+        setTimeout(() => {
+          this.textContent = 'Copy Share Link';
+          this.classList.remove('copied');
+        }, 2000);
+      }).catch(() => {
+        // Fallback: select a prompt with the URL
+        prompt('Copy this link:', url);
+      });
+    });
+
+    // Redraw chart on resize
+    window.addEventListener('resize', calculate);
+
+    // Load data on page load: URL params take priority, then localStorage
+    const loaded = loadFromURL() || loadInputs();
+    if (loaded) {
+      calculate();
+    }
+  </script>
+</body>
+</html>
