@@ -84,6 +84,35 @@
       border-color: #0071e3;
     }
 
+    .field-hint {
+      display: block;
+      font-size: 12px;
+      color: #86868b;
+      margin-top: 4px;
+    }
+
+    .total-payment {
+      background: #e8f5e9;
+      border-radius: 12px;
+      padding: 14px;
+      margin-top: 14px;
+    }
+
+    .total-payment-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      color: #86868b;
+      margin-bottom: 4px;
+    }
+
+    .total-payment-value {
+      font-size: 22px;
+      font-weight: 700;
+      color: #2e7d32;
+    }
+
     .results-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -229,12 +258,21 @@
       <input type="text" id="rate" inputmode="decimal" placeholder="6.5">
     </div>
     <div class="field">
-      <label for="payment">Monthly Payment</label>
+      <label for="payment">Monthly P&I Payment</label>
       <input type="text" id="payment" inputmode="decimal" placeholder="$1,896">
+    </div>
+    <div class="field">
+      <label for="escrow">Escrow (taxes & insurance)</label>
+      <input type="text" id="escrow" inputmode="decimal" placeholder="$450">
+      <span class="field-hint">Optional — helps separate what actually pays down principal</span>
     </div>
     <div class="field">
       <label for="extra">Extra Monthly Payment</label>
       <input type="text" id="extra" inputmode="decimal" placeholder="$200">
+    </div>
+    <div class="total-payment" id="total-payment" style="display: none;">
+      <div class="total-payment-label">New Monthly Payment</div>
+      <div class="total-payment-value" id="total-payment-value"></div>
     </div>
   </div>
 
@@ -299,12 +337,12 @@
   <script>
     const $ = (id) => document.getElementById(id);
     const STORAGE_KEY = 'payoff-tracker';
-    const FIELDS = ['balance', 'rate', 'payment', 'extra'];
+    const FIELDS = ['balance', 'rate', 'payment', 'escrow', 'extra'];
     // Short param names for compact URLs
-    const PARAM_MAP = { balance: 'b', rate: 'r', payment: 'p', extra: 'e' };
-    const PARAM_MAP_REV = { b: 'balance', r: 'rate', p: 'payment', e: 'extra' };
+    const PARAM_MAP = { balance: 'b', rate: 'r', payment: 'p', escrow: 's', extra: 'e' };
+    const PARAM_MAP_REV = { b: 'balance', r: 'rate', p: 'payment', s: 'escrow', e: 'extra' };
     // Currency fields get formatted with $
-    const CURRENCY_FIELDS = ['balance', 'payment', 'extra'];
+    const CURRENCY_FIELDS = ['balance', 'payment', 'escrow', 'extra'];
 
     // Save current inputs to localStorage
     function saveInputs() {
@@ -502,8 +540,21 @@
     function calculate() {
       const balance = parseNum('balance');
       const rate = parseNum('rate');
-      const payment = parseNum('payment');
+      const totalPIInput = parseNum('payment');
+      const escrow = parseNum('escrow');
       const extra = parseNum('extra');
+
+      // P&I is what the user enters — escrow doesn't affect amortization
+      const payment = totalPIInput;
+
+      // Show new monthly payment total
+      const totalMonthly = payment + escrow + extra;
+      if (totalMonthly > 0) {
+        $('total-payment').style.display = 'block';
+        $('total-payment-value').textContent = `${fmt(totalMonthly)}/mo`;
+      } else {
+        $('total-payment').style.display = 'none';
+      }
 
       if (balance <= 0 || rate <= 0 || payment <= 0) {
         $('results').style.display = 'none';
@@ -519,7 +570,7 @@
         $('share-btn').style.display = 'none';
         $('no-results').style.display = 'block';
         $('no-results').querySelector('p').textContent =
-          `Monthly payment must exceed ${fmt(Math.ceil(minPayment))} to cover interest`;
+          `P&I payment must exceed ${fmt(Math.ceil(minPayment))} to cover interest`;
         return;
       }
 
@@ -568,7 +619,7 @@
     }
 
     // Auto-format currency inputs
-    ['balance', 'payment', 'extra'].forEach((id) => {
+    ['balance', 'payment', 'escrow', 'extra'].forEach((id) => {
       $(id).addEventListener('blur', function () {
         const val = parseFloat(this.value.replace(/[^0-9.]/g, ''));
         if (!isNaN(val) && val > 0) {
@@ -586,7 +637,7 @@
     });
 
     // Also save formatted values on blur
-    ['balance', 'payment', 'extra'].forEach((id) => {
+    ['balance', 'payment', 'escrow', 'extra'].forEach((id) => {
       $(id).addEventListener('blur', () => saveInputs());
     });
 
