@@ -11,6 +11,7 @@
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Home Payoff Tracker">
   <meta name="twitter:description" content="See how extra payments can save you thousands in interest and years off your mortgage.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -369,6 +370,11 @@
       <label for="balance">Current Balance</label>
       <input type="text" id="balance" inputmode="decimal" placeholder="$350,000">
     </div>
+    <div class="field">
+      <label for="age">Your Current Age</label>
+      <input type="text" id="age" inputmode="numeric" placeholder="32">
+      <span class="field-hint">Optional — see how old you'll be when it's paid off</span>
+    </div>
     <div class="progress-container" id="progress-container" style="display: none;">
       <div class="progress-header">
         <span class="progress-label">Principal Paid Off</span>
@@ -417,6 +423,16 @@
           <div class="stat-value" id="new-date">—</div>
           <div class="stat-detail" id="new-months">—</div>
         </div>
+        <div class="stat" id="age-orig-stat" style="display: none;">
+          <div class="stat-label">Paid Off At</div>
+          <div class="stat-value" id="age-orig">—</div>
+          <div class="stat-detail">years old</div>
+        </div>
+        <div class="stat highlight" id="age-extra-stat" style="display: none;">
+          <div class="stat-label">Paid Off At</div>
+          <div class="stat-value" id="age-extra">—</div>
+          <div class="stat-detail" id="age-saved">years old</div>
+        </div>
         <div class="stat">
           <div class="stat-label">Remaining Interest</div>
           <div class="stat-value" id="orig-interest">—</div>
@@ -458,10 +474,10 @@
   <script>
     const $ = (id) => document.getElementById(id);
     const STORAGE_KEY = 'payoff-tracker-v2';
-    const FIELDS = ['original', 'term', 'rate', 'startdate', 'balance', 'escrow', 'extra'];
+    const FIELDS = ['original', 'term', 'rate', 'startdate', 'balance', 'age', 'escrow', 'extra'];
     // Short param names for compact URLs
-    const PARAM_MAP = { original: 'o', term: 't', rate: 'r', startdate: 'd', balance: 'b', escrow: 's', extra: 'e' };
-    const PARAM_MAP_REV = { o: 'original', t: 'term', r: 'rate', d: 'startdate', b: 'balance', s: 'escrow', e: 'extra' };
+    const PARAM_MAP = { original: 'o', term: 't', rate: 'r', startdate: 'd', balance: 'b', age: 'a', escrow: 's', extra: 'e' };
+    const PARAM_MAP_REV = { o: 'original', t: 'term', r: 'rate', d: 'startdate', b: 'balance', a: 'age', s: 'escrow', e: 'extra' };
     // Currency fields get formatted with $
     const CURRENCY_FIELDS = ['original', 'balance', 'escrow', 'extra'];
 
@@ -628,7 +644,8 @@
         ctx.fillStyle = '#86868b';
         ctx.font = '11px -apple-system, sans-serif';
         ctx.textAlign = 'right';
-        ctx.fillText(fmt(val), pad.left - 8, y + 4);
+        const label = val >= 1000 ? '$' + Math.round(val / 1000).toLocaleString() + 'K' : fmt(val);
+        ctx.fillText(label, pad.left - 8, y + 4);
       }
 
       // X-axis labels
@@ -680,6 +697,7 @@
       const rate = parseNum('rate');
       const startDateVal = $('startdate').value; // "YYYY-MM" or ""
       const balance = parseNum('balance');
+      const age = parseNum('age');
       const escrow = parseNum('escrow');
       const extra = parseNum('extra');
 
@@ -781,11 +799,13 @@
       const extraRemaining = withExtra.reduce((s, d) => s + d.interest, 0);
 
       // Original payoff: use true date from start + term if available
+      let origPayoffMonths = original.length;
       if (startDate) {
         const origPayoff = new Date(startDate);
         origPayoff.setMonth(origPayoff.getMonth() + termMonths);
         $('orig-date').textContent = origPayoff.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
         const remainingOrigMonths = termMonths - elapsedMonths;
+        origPayoffMonths = remainingOrigMonths;
         $('orig-months').textContent = `${fmtMonths(Math.max(0, remainingOrigMonths))} left`;
       } else {
         $('orig-date').textContent = payoffDate(original.length);
@@ -803,6 +823,25 @@
         $('new-months').textContent = 'Add extra to compare';
         $('interest-saved').textContent = '—';
         $('time-saved').textContent = 'Add extra to see savings';
+      }
+
+      // Age at payoff stats
+      if (age > 0) {
+        const origAge = Math.floor(age + origPayoffMonths / 12);
+        $('age-orig-stat').style.display = 'block';
+        $('age-orig').textContent = origAge;
+
+        if (extra > 0) {
+          const extraAge = Math.floor(age + withExtra.length / 12);
+          $('age-extra-stat').style.display = 'block';
+          $('age-extra').textContent = extraAge;
+          $('age-saved').textContent = `${origAge - extraAge} years younger`;
+        } else {
+          $('age-extra-stat').style.display = 'none';
+        }
+      } else {
+        $('age-orig-stat').style.display = 'none';
+        $('age-extra-stat').style.display = 'none';
       }
 
       drawChart(original, withExtra);
